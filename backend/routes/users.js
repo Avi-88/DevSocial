@@ -131,6 +131,8 @@ router.get("/:id/suggested", async(req,res)=>{
         if(!user){
             res.status(404).json("user not found")
         } else {
+            /*const newResult = await User.find({followers:{$nin: user}})*/
+            
             const suggestedImpure =  allUsers.filter(el => {
                 return !user.following?.find(element => {
                    return element.id === el.id ;
@@ -140,8 +142,9 @@ router.get("/:id/suggested", async(req,res)=>{
             const suggestedPure = suggestedImpure.filter(el => {
                 return el.id !== req.params.id ;
             })
-
+            
             res.status(200).json({suggested : suggestedPure , following: user.following});
+           /* res.status(200).json(newResult)*/
         }  
     } catch (error) {
         res.status(500).json(error)

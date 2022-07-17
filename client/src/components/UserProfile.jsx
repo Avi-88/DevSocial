@@ -1,4 +1,5 @@
 import React, {useEffect, useState, useContext} from 'react';
+import {useNavigate} from "react-router-dom"
 import Avatar from '@mui/material/Avatar';
 import {Link} from 'react-router-dom';
 import Chip from '@mui/material/Chip';
@@ -12,6 +13,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import LoadProfile from '../loaders/LoadProfile';
+import CircularProgress from '@mui/material/CircularProgress';
 import _ from 'lodash';
 
 const UserProfile = () => {
@@ -22,19 +24,22 @@ const UserProfile = () => {
     const [userPosts, setUserPosts] = useState([]);
     const [suggested, setSuggested] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingAction, setIsLoadingAction] = useState(false);
     const [follow, setFollow] = useState(false);
     const [paginatedList, setPaginatedList] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);  
 
     const {profileId} = useParams();
+    const navigate = useNavigate();
         
     useEffect(()=>{
         const getProfileData = async () =>{
+        setIsLoading(true);
         const requestOne = await axios.get(`/users/${profileId}`);
         const requestTwo = await axios.get(`/posts/myposts/${profileId}`);
         const requestThree = await axios.get(`/users/${user._id}/suggested`);
 
-        axios.all([requestOne, requestTwo , requestThree]).then(axios.spread((...responses) => {
+        await axios.all([requestOne, requestTwo , requestThree]).then(axios.spread((...responses) => {
           const responseOne = responses[0]
           const responseTwo = responses[1]
           const responseThree = responses[2]
@@ -42,7 +47,7 @@ const UserProfile = () => {
           setUserProfile(responseOne.data)
           setUserPosts(responseTwo.data)
           setSuggested(responseThree.data.suggested)     
-          setIsLoading(false)
+          setIsLoading(false);
         }))
         .catch(error => {
           alert("There was an error: " + error);
@@ -54,8 +59,14 @@ const UserProfile = () => {
 
 
     useEffect(()=>{
-        setPaginatedList(_(suggested)?.slice(0).take(pageSize).value());
-      },[suggested]);
+      setPaginatedList(_(suggested)?.slice(0).take(pageSize).value());
+    },[suggested]);
+
+    useEffect(()=>{
+      const startIndex = (currentPage - 1)*pageSize;
+      const paginated = _(suggested)?.slice(startIndex).take(pageSize).value();
+      setPaginatedList(paginated);
+  },[currentPage , suggested]);
 
     
     const pageSize = 6;
@@ -64,26 +75,24 @@ const UserProfile = () => {
 
     const pages = _.range(1, pageCount+1);
 
-    const paginationNext = (pageNo) =>{
-        setCurrentPage(pageNo);
-        const startIndex = (pageNo - 1)*pageSize;
-        const paginated = _(suggested)?.slice(startIndex).take(pageSize).value();
-        setPaginatedList(paginated);
+    const paginationNext = () =>{
+      if(currentPage < pages.length){
+        setCurrentPage(prevValue => prevValue + 1 );
+      }
     };
 
-    const paginationPrevious = (pageNo) =>{
-        setCurrentPage(pageNo);
-        const startIndex = (pageNo - 1)*pageSize;
-        const paginated = _(suggested)?.slice(startIndex).take(pageSize).value();
-        setPaginatedList(paginated);
+    const paginationPrevious = () =>{
+      if(currentPage > 1){
+        setCurrentPage(prevValue => prevValue - 1 );
+      }
     };
-   
-
 
     const handleFollow = async () =>{
         try {
+            setIsLoadingAction(true);
             await axios.put(`/users/${profileId}/follow`, {userId: user._id});
             setFollow(!follow);
+            setIsLoadingAction(false);
         } catch (error) {
             alert('something went wrong:'+ error);
         };
@@ -91,18 +100,22 @@ const UserProfile = () => {
 
     const handleUnFollow = async () =>{
         try {
+            setIsLoadingAction(true);
             await axios.put(`/users/${profileId}/unfollow`, {userId: user._id});
             setFollow(!follow);
+            setIsLoadingAction(false);
         } catch (error) {
             alert('something went wrong:'+ error);
         }
     };
 
-    
+    const userSwitch = async (id) => {
+      navigate(`/userprofile/${id}`)
+    };
 
 
-  return isLoading ? (<LoadProfile/>) : (<div className=' lg:w-4/5 md:w-full sm:w-full h-full sm:flex md:grid md:grid-cols-8 md:gap-6 md:p-6  mx-auto'>
-        <div className='sm:w-full md:w-full md:col-span-5 h-full sm:col-span-8 shadow-lg bg-white p-2 rounded-lg relative'>
+  return isLoading ? (<LoadProfile/>) : (<div className=' lg:w-4/5 md:w-full w-full h-full sm:flex md:grid md:grid-cols-8 md:gap-6 md:p-6  mx-auto'>
+        <div className='w-full md:w-full md:col-span-5 h-full sm:col-span-8 shadow-lg bg-white p-2 rounded-lg relative'>
             <div className='md:border-b md:border-solid'>
               
                 <img className='absolute top-0 left-0  h-1/6 lg:h-48 sm:h-1/5 md:h-1/5 w-full md:rounded-t-lg object-cover drop-shadow-xl' alt='banner' src='/assets/4884273.jpg'></img>
@@ -112,7 +125,7 @@ const UserProfile = () => {
                       <Avatar sx={{ height:{lg:150,md:120, sm:100 , xs:100},width:{lg:150,md:120, sm:100 , xs:100},border:1, borderColor:'white' , boxShadow:10}} src={userProfile.profilePicture}/>
                       <h1 className='p-4 md:mt-2 font-bold text-base md:text-lg'>{userProfile.username}</h1>
                       <div className='mb-2' >
-                        {userProfile.followers.some(p => p._id === user._id) ? <Button size="small" onClick={handleUnFollow} variant="outlined" endIcon={<DoneIcon />}>following</Button> : <Button size="small" onClick={handleFollow}  variant="contained" endIcon={<AddIcon />}>follow</Button> } 
+                        {userProfile.followers.some(p => p._id === user._id) ? <Button size="small" onClick={handleUnFollow} variant="outlined" endIcon={<DoneIcon />}>{isLoadingAction ?  <CircularProgress size={20}  /> : 'Following'}</Button> : <Button size="small" onClick={handleFollow}  variant="contained" endIcon={<AddIcon />}>{isLoadingAction ?  <CircularProgress size={20} sx={{color:'white'}} /> : 'Follow'}</Button> } 
                       </div>                           
                   </div>
                   <div className='md:hidden md:mb-4 flex flex-col justify-center items-center z-40'>
@@ -131,6 +144,11 @@ const UserProfile = () => {
               </div>
             </div>
             <div className='pt-4 border-t border-solid'>
+              {userPosts.length === 0 ? (
+                <div className='flex justify-center items-center  h-40'>
+                  <p className='font-semibold text-gray-400 text-sm'>The user hasn't posted yet</p>
+                </div>
+              ) : (
                 <div className='grid grid-cols-3 gap-1 md:gap-1'>    
                          {userPosts.map((post, index) => (
                         <div key={index} className='col-span-1 aspect-square'>
@@ -139,7 +157,8 @@ const UserProfile = () => {
                           </Link>
                         </div>
                         ))}
-                </div>    
+                </div>
+              )}
             </div>
         </div>
 
@@ -164,18 +183,18 @@ const UserProfile = () => {
                         <p className='font-semibold p-2'>Suggested :</p>
                     </div>
                     <div className='grid grid-cols-3 gap-4  justify-items-center items-start '>
-                      {suggested?.map((profile, index)=>{
+                      {paginatedList?.map((profile, index)=>{
                         return(<div key={index} className='flex flex-col justify-center items-center m-2'>
-                                <Link to={`/userprofile/${profile._id}`}>
+                                <div className='cursor-pointer' onClick={() => userSwitch(profile._id)} >
                                   <Avatar sx={{ backgroundColor:"orange", height:{lg:60,md:50, sm:40},width:{lg:60,md:50, sm:40}}} src={profile.profilePicture} />
-                                </Link>
+                                </div>
                                 <h1 className='p-2 text-center md:text-xs lg:text-sm'>{profile.username}</h1>
                               </div>)
                       })}                       
                     </div>
-                    <div className='flex justify-center items-center p-4'>
-                        <IconButton color='error' size='small' onClick={()=>{}}><ArrowBackIosIcon/></IconButton>
-                        <IconButton color='error' size='small' onClick={()=>{}}><ArrowForwardIosIcon/></IconButton>
+                    <div className='flex justify-center gap-4 items-center p-4'>
+                        <IconButton color='primary' size='small' onClick={paginationPrevious}><ArrowBackIosIcon/></IconButton>
+                        <IconButton color='primary' size='small' onClick={paginationNext}><ArrowForwardIosIcon/></IconButton>
                     </div>
                 </div>
 

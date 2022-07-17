@@ -96,7 +96,7 @@ router.put("/:id", async(req,res)=>{
  router.delete("/:id", async(req,res)=>{
     const post = await Post.findById(req.params.id).populate('author');
 
-    if(String(req.body.userId) === String(post.author._id)){
+    if(String(req.body.userId) == String(post.author._id)){
         try {
             const fileId = req.body.fileId;
 

@@ -20,6 +20,10 @@ import { useNavigate } from 'react-router-dom';
 import LoadProfile from '../loaders/LoadProfile';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import _ from 'lodash';
+
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -42,6 +46,8 @@ const Profile = () => {
   const [type, setType] = useState('info');
   const[profilePic, setProfilePic] = useState('');
   const[profilePreview, setProfilePreview] = useState(null);
+  const [paginatedList, setPaginatedList] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1); 
 
   const username = useRef();
   const bio = useRef();
@@ -72,6 +78,34 @@ const Profile = () => {
 }, [user._id]);
 
 
+useEffect(()=>{
+  setPaginatedList(_(suggested)?.slice(0).take(pageSize).value());
+},[suggested]);
+
+
+useEffect(()=>{
+  const startIndex = (currentPage - 1)*pageSize;
+  const paginated = _(suggested)?.slice(startIndex).take(pageSize).value();
+  setPaginatedList(paginated);
+},[currentPage , suggested]);
+
+const pageSize = 6;
+
+const pageCount = suggested ? Math.ceil(suggested.length/pageSize) : 0;
+
+const pages = _.range(1, pageCount+1);
+
+const paginationNext = () =>{
+  if(currentPage < pages.length){
+    setCurrentPage(prevValue => prevValue + 1 );
+  }
+};
+
+const paginationPrevious = () =>{
+  if(currentPage > 1){
+    setCurrentPage(prevValue => prevValue - 1 );
+  }
+};
 
 const handleChange = (e)=>{
   const file = e.target.files[0];
@@ -83,18 +117,18 @@ const handlePreview = (file)=>{
   const reader = new FileReader();
   reader.readAsDataURL(file);
   reader.onloadend = ()=>{
-      setProfilePreview(reader.result);
+    setProfilePreview(reader.result);
   };
 };
 
 
 const handleClickOpen = () => {
-        setOpen(true);
+  setOpen(true);
 };
     
 const handleClose = () => {
-        setOpen(false);
-        setProfilePreview(null);
+  setOpen(false);
+  setProfilePreview(null);
 };
 
 
@@ -283,7 +317,7 @@ return isLoading ? (<LoadProfile/>) : (<div className=' lg:w-4/5 w-full h-full s
                         <p className='font-semibold p-2'>Suggested :</p>
                     </div>
                     <div className='grid grid-cols-3 gap-4  justify-items-center items-start '>
-                      {suggested?.map((profile, index)=>{
+                      {paginatedList?.map((profile, index)=>{
                         return(<div key={index} className='flex flex-col justify-center items-center m-2'>
                                 <Link to={`/userprofile/${profile._id}`}>
                                   <Avatar sx={{ backgroundColor:"orange", height:{lg:60,md:50, sm:40},width:{lg:60,md:50, sm:40}}} src={profile.profilePicture} />
@@ -291,7 +325,10 @@ return isLoading ? (<LoadProfile/>) : (<div className=' lg:w-4/5 w-full h-full s
                                 <h1 className='p-2 text-center md:text-xs lg:text-sm'>{profile.username}</h1>
                               </div>)
                       })}
-                        
+                    </div>
+                    <div className='flex justify-center gap-4 items-center p-4'>
+                        <IconButton color='primary' size='small' onClick={paginationPrevious}><ArrowBackIosIcon/></IconButton>
+                        <IconButton color='primary' size='small' onClick={paginationNext}><ArrowForwardIosIcon/></IconButton>
                     </div>
                 </div>
 

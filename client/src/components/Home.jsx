@@ -128,7 +128,7 @@ const Home = () => {
             console.log(error); 
         }
       
-      };
+    };
 
     const handleAlerts = (msg,type) =>{
         return (
@@ -140,13 +140,12 @@ const Home = () => {
         )
     }  
 
-
     const handleAlertClose = (event, reason) => {
         if (reason === 'clickaway') {
           return;
         }
         setOpenAlert(false);
-      }; 
+    }; 
 
     return isLoading ? (<LoadHome/>) : (
         <div className= "lg:w-11/12 md:w-full sm:w-full ">

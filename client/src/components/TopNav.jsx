@@ -20,7 +20,7 @@ const TopNav = () => {
   return (
    <div className='flex items-center justify-between w-full'>
       <div className='w-12 h-10 flex justify-center items-center'>
-         <img alt='logo' className='object-cover' src="https://i.pinimg.com/736x/53/44/f4/5344f4dd489a273b6a71f8db42954054--aesthetic-words-grunge-girl-aesthetic.jpg?b=t"></img>
+         <img alt='logo' className='object-cover' src="/assets/sociallogo.png"></img>
       </div>
       <div className='px-4'>
          <ul className="flex ">

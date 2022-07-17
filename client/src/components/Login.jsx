@@ -104,7 +104,7 @@ const Login = () => {
         <div className='p-8 mt-4 lg:w-2/5 md:w-3/5 sm:w-5/6 w-full overflow-visible h-full'>
             <div className='px-10 py-8 mt-4 text-center bg-white shadow-xl rounded-lg '>
                 <div className='p-4 flex justify-center items-top mb-4'>
-                    <Avatar sx={{height:"120px", width:"120px", boxShadow:10}} alt="Remy Sharp" src="https://decadescdn.decades.com/uDZoL-1504200570-195-blog-Screen%20Shot%202017-08-31%20at%2012.21.42%20PM.jpg" />
+                    <Avatar sx={{height:"120px", width:"120px", boxShadow:10}} alt="Remy Sharp" src="/assets/sociallogo.png" />
                 </div>
                 <h1 className='mb-6 text-2xl font-bold '>{isNew ? "Join the club" : "Sign In to your Account" }</h1>
                 <form >
